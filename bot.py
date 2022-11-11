@@ -83,7 +83,16 @@ def updateHandlers(client, message,redis):
 		if text and redis.get("{}:{}:Type".format(BOT_ID,userID)) == "mailpas":
 			redis.set("{}:{}:mailpas".format(BOT_ID,userID),text)
 			redis.delete("{}:{}:Type".format(BOT_ID,userID))
-			message.reply_text("تم حفظ كلمه المرور بنجاح", quote=True)
+			server = smtplib.SMTP("smtp.gmail.com",587)
+			server.ehlo()
+			server.starttls()
+			try:
+				server.login(redis.get("{}:{}:mail".format(BOT_ID,userID)),redis.get("{}:{}:mailpas".format(BOT_ID,userID)))
+				message.reply_text("تم حفظ كلمه المرور بنجاح", quote=True)
+			except smtplib.SMTPAuthenticationError:
+				message.reply_text("حصل خطأ ما تأكد من الحساب ! .", quote=True)
+				redis.delete("{}:{}:mail".format(BOT_ID,userID))
+				redis.delete("{}:{}:mailpas".format(BOT_ID,userID))
 		if text and redis.get("{}:{}:Type".format(BOT_ID,userID)) == "mailto":
 			if '@' in text:
 				redis.set("{}:{}:mailto".format(BOT_ID,userID),text)
